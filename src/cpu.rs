@@ -81,6 +81,36 @@ impl Cpu {
                 self.print_instruction(operand, operator, "MOVA");
                 self.set_register("A", operator);
             }
+            0b00000011 => {
+                // Moving a literal value to register B
+                self.print_instruction(operand, operator, "MOVB");
+                self.set_register("B", operator);
+            }
+            0b00000100 => {
+                // Moving a literal value to register C
+                self.print_instruction(operand, operator, "MOVC");
+                self.set_register("C", operator);
+            }
+            0b00000101 => {
+                // Moving a literal value to register D
+                self.print_instruction(operand, operator, "MOVD");
+                self.set_register("D", operator);
+            }
+            0b00000110 => {
+                // Moving a value from register 1 to register 2
+                self.print_instruction(operand, operator, "MOV A,B");
+                let r1 = operator >> 4;
+                let r2 = operator & ((1 << 4) - 1);
+                let register_names = self.register_names.clone();
+                let r1_name = register_names.get(r1 as usize);
+                match r1_name {
+                    Some(r1_name) => {
+                        let r2_value = self.get_register(self.register_names.get(r2 as usize).unwrap());
+                        self.set_register(r1_name, r2_value.unwrap());
+                    },
+                    _ => todo!()
+                }
+            }
             0b00011010 => {
                 // SUBA #
                 self.print_instruction(operand, operator, "SUBA");
@@ -121,8 +151,8 @@ impl Cpu {
         match ir_value {
             Ok(data) => {
                 let instruction = self.fetch_memory(data).unwrap();
-                self.set_register("IR", data + 1);
                 self.execute(instruction);
+                self.set_register("IR", data + 1);
             }
             _ => {
                 panic!("[CPU] IR VALUE not found.");

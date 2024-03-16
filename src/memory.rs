@@ -1,5 +1,6 @@
 pub struct Memory {
-    data: Vec<u16>
+    data: Vec<u16>,
+    pub len: usize
 }
 
 impl Memory {
@@ -9,7 +10,8 @@ impl Memory {
             data.push(0b0000000000000000);
         }
         Memory {
-            data
+            data,
+            len: size
         }
     }
     pub fn get_data(&self, index: usize) -> Result<u16, &str> {

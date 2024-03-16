@@ -1,6 +1,5 @@
 use crate::memory::Memory;
 
-
 pub struct Cpu {
     memory: Memory,
     register_values: Vec<u16>,
@@ -79,10 +78,11 @@ impl Cpu {
         match operand {
             // Refactor this to to replace these magic numbers.
             0b00000010 => {
-                println!("[CPU]: Moving a literal value ({:#8b}) to register A", operator);
+                // Moving a literal value to register A
+                self.set_register("A", operator);
             },
             _ => {
-                println!("Idk: {:?}", operand);
+                println!("[CPU]: Instruction {:#16b} not implemented yet", instruction);
             }
         }
     }
@@ -93,8 +93,25 @@ impl Cpu {
             Ok(data) => {
                 let instruction = self.fetch_memory(data).unwrap();
                 self.execute(instruction);
+                self.set_register("IR", data + 1);
             },
             _ => {
+                panic!("[CPU] IR VALUE not found.");
+            }
+        }
+    }
+
+    pub fn _loop(&mut self) {
+        loop {
+            match self.get_register("IR") {
+                Ok(value) => {
+                    if value >= 0 && (value as usize) < self.memory.len {
+                        self.step();
+                    } else {
+                        break;
+                    }
+                },
+                _ => println!("Loop ended.")
 
             }
         }

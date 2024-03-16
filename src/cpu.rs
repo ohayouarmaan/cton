@@ -1,5 +1,5 @@
 use crate::memory::Memory;
-use prettytable::{table, Cell, Row, Table};
+use prettytable::{Cell, Row, Table};
 
 pub struct Cpu {
     memory: Memory,
@@ -64,21 +64,28 @@ impl Cpu {
         }
     }
 
+    fn print_instruction(&self, operand: u16, operator: u16, _type: &str) {
+        println!("[CPU] {{DEBUG}} Instruction_type: {:?} Operand: {:#000000008b} Operator: {:#000000008b}", _type, operand, operator);
+    }
+
     pub fn execute(&mut self, instruction: u16) {
         // divide the provided instruction in two sets operand and operator
         // the first 8 bits from the 16 bits are the operand and the other 8 bits are the operator(s)
         // eg: 0b1101 -> operand: 11 and operator: 01
         let operand = instruction >> 8;
         let operator = instruction & ((1 << 8) - 1);
-        println!(
-            "[CPU] {{DEBUG}} Operand: {:#08b} Operator: {:#08b}",
-            operand, operator
-        );
         match operand {
             // Refactor this to to replace these magic numbers.
             0b00000010 => {
                 // Moving a literal value to register A
+                self.print_instruction(operand, operator, "MOVA");
                 self.set_register("A", operator);
+            }
+            0b00011010 => {
+                // SUBA #
+                self.print_instruction(operand, operator, "SUBA");
+                let a_value = self.get_register("A").unwrap();
+                self.set_register("A", a_value - operator);
             }
             _ => {
                 println!(
@@ -114,8 +121,8 @@ impl Cpu {
         match ir_value {
             Ok(data) => {
                 let instruction = self.fetch_memory(data).unwrap();
-                self.execute(instruction);
                 self.set_register("IR", data + 1);
+                self.execute(instruction);
             }
             _ => {
                 panic!("[CPU] IR VALUE not found.");
@@ -134,7 +141,7 @@ impl Cpu {
                         break;
                     }
                 }
-                _ => println!("Loop ended."),
+                _ => println!("[CPU] Error getting IR value"),
             }
         }
     }

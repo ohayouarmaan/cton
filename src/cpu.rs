@@ -1,9 +1,10 @@
 use crate::memory::Memory;
+use prettytable::{table, Cell, Row, Table};
 
 pub struct Cpu {
     memory: Memory,
     register_values: Vec<u16>,
-    register_names: [String; 8]
+    register_names: [String; 8],
 }
 
 impl Cpu {
@@ -15,21 +16,16 @@ impl Cpu {
             register_values.push(0b0000000000000000);
         }
         match mem {
-            Some(memory) => {
-                Cpu {
-                    memory: memory,
-                    register_values,
-                    register_names
-                }
+            Some(memory) => Cpu {
+                memory: memory,
+                register_values,
+                register_names,
             },
-            _ => {
-                Cpu {
-                    memory: Memory::new(1024),
-                    register_values,
-                    register_names
-                }
-
-            }
+            _ => Cpu {
+                memory: Memory::new(1024),
+                register_values,
+                register_names,
+            },
         }
     }
 
@@ -39,7 +35,7 @@ impl Cpu {
             Some(index) => {
                 self.register_values[index] = value;
                 return true;
-            },
+            }
             _ => {
                 panic!("[CPU] NO SUCH REGISTER EXISTS");
             }
@@ -51,7 +47,7 @@ impl Cpu {
         match position {
             Some(index) => {
                 return Ok(self.register_values[index]);
-            },
+            }
             _ => {
                 return Err("[CPU]: No such register exists.");
             }
@@ -63,8 +59,8 @@ impl Cpu {
         match memory_data {
             Ok(data) => {
                 return Ok(data);
-            },
-            Err(x) => Err(x)
+            }
+            Err(x) => Err(x),
         }
     }
 
@@ -74,17 +70,43 @@ impl Cpu {
         // eg: 0b1101 -> operand: 11 and operator: 01
         let operand = instruction >> 8;
         let operator = instruction & ((1 << 8) - 1);
-        println!("Operand: {:#8b} Operator: {:#8b}", operand, operator);
+        println!(
+            "[CPU] {{DEBUG}} Operand: {:#08b} Operator: {:#08b}",
+            operand, operator
+        );
         match operand {
             // Refactor this to to replace these magic numbers.
             0b00000010 => {
                 // Moving a literal value to register A
                 self.set_register("A", operator);
-            },
+            }
             _ => {
-                println!("[CPU]: Instruction {:#16b} not implemented yet", instruction);
+                println!(
+                    "[CPU]: Instruction {:#16b} not implemented yet",
+                    instruction
+                );
             }
         }
+    }
+
+    pub fn debug(&self) {
+        let mut table = Table::new();
+        let mut headers: Vec<Cell> = Vec::new();
+        let mut values: Vec<Cell> = Vec::new();
+
+        self.register_names
+            .iter()
+            .enumerate()
+            .for_each(|(_, x)| headers.push(Cell::new(&x)));
+
+        self.register_values
+            .iter()
+            .enumerate()
+            .for_each(|(_, x)| values.push(Cell::new(&(x.to_string()))));
+
+        table.add_row(Row::new(headers));
+        table.add_row(Row::new(values));
+        table.printstd();
     }
 
     pub fn step(&mut self) {
@@ -94,7 +116,7 @@ impl Cpu {
                 let instruction = self.fetch_memory(data).unwrap();
                 self.execute(instruction);
                 self.set_register("IR", data + 1);
-            },
+            }
             _ => {
                 panic!("[CPU] IR VALUE not found.");
             }
@@ -107,12 +129,12 @@ impl Cpu {
                 Ok(value) => {
                     if value >= 0 && (value as usize) < self.memory.len {
                         self.step();
+                        self.debug();
                     } else {
                         break;
                     }
-                },
-                _ => println!("Loop ended.")
-
+                }
+                _ => println!("Loop ended."),
             }
         }
     }

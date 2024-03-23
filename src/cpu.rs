@@ -76,6 +76,10 @@ impl Cpu {
         let operator = instruction & ((1 << 8) - 1);
         match operand {
             // Refactor this to to replace these magic numbers.
+
+            /////////////////////////////////////////////////////////////
+            //////////          Move Commands            ////////////////
+            /////////////////////////////////////////////////////////////
             0b00000010 => {
                 // Moving a literal value to register A
                 self.print_instruction(operand, operator, "MOVA");
@@ -105,17 +109,39 @@ impl Cpu {
                 let r1_name = register_names.get(r1 as usize);
                 match r1_name {
                     Some(r1_name) => {
-                        let r2_value = self.get_register(self.register_names.get(r2 as usize).unwrap());
+                        let r2_value =
+                            self.get_register(self.register_names.get(r2 as usize).unwrap());
                         self.set_register(r1_name, r2_value.unwrap());
-                    },
-                    _ => todo!()
+                    }
+                    _ => todo!(),
                 }
             }
+            /////////////////////////////////////////////////////////////
+            //////////          Arithemetic Commands     ////////////////
+            /////////////////////////////////////////////////////////////
             0b00011010 => {
                 // SUBA #
                 self.print_instruction(operand, operator, "SUBA");
                 let a_value = self.get_register("A").unwrap();
                 self.set_register("A", a_value - operator);
+            }
+            0b00011011 => {
+                // SUBA,B
+                self.print_instruction(operand, operator, "SUB A,B");
+                let r1 = operator >> 4;
+                let r2 = operator & ((1 << 4) - 1);
+                let register_names = self.register_names.clone();
+                let r1_name = match register_names.get(r1 as usize) {
+                    Some(r1_name_value) => r1_name_value,
+                    _ => todo!(),
+                };
+                let r2_name = match register_names.get(r2 as usize) {
+                    Some(r2_name_value) => r2_name_value,
+                    _ => todo!(),
+                };
+                let r2_value = self.get_register(&r2_name);
+                let r1_value = self.get_register(&r1_name);
+                self.set_register(r1_name, r1_value.unwrap() - r2_value.unwrap());
             }
             _ => {
                 println!(
